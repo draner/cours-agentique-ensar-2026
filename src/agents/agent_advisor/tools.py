@@ -89,3 +89,4 @@ def format_domain_response(tool_results: dict[str, Any]) -> str:
     )
 
     return "\n".join(lines)
+

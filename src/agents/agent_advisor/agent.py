@@ -1,4 +1,3 @@
-
 """Agent conseiller d'orientation académique : LangGraph + RAG + Ollama."""
 
 import os
@@ -61,9 +60,7 @@ class CustomAgentPlugin(BaseAgentPlugin):
             user_query = str(last_message.content)
 
             if vector_store is None:
-                vector_store = get_vector_store(
-                    reindex_if_empty=False
-                )
+                vector_store = get_vector_store(reindex_if_empty=False)
 
             # 1. Recherche RAG ciblée.
             # Le filtre S8 est appliqué seulement si l'étudiant
@@ -78,16 +75,12 @@ class CustomAgentPlugin(BaseAgentPlugin):
 
             if semester_match:
                 semester = semester_match.group(0).upper()
-                search_kwargs["filter"] = {
-                    "semestre": semester
-                }
+                search_kwargs["filter"] = {"semestre": semester}
 
             relevant_docs = []
 
             try:
-                retriever = vector_store.as_retriever(
-                    search_kwargs=search_kwargs
-                )
+                retriever = vector_store.as_retriever(search_kwargs=search_kwargs)
                 relevant_docs = retriever.invoke(user_query)
             except Exception:
                 relevant_docs = []
@@ -117,7 +110,6 @@ class CustomAgentPlugin(BaseAgentPlugin):
             system_prompt = (
                 "Tu es ADVISOR, un conseiller d'orientation "
                 "académique pour une école d'ingénieurs.\n\n"
-
                 "MISSIONS :\n"
                 "1. Comprendre le projet professionnel de l'étudiant.\n"
                 "2. Identifier les UE pertinentes dans les syllabus.\n"
@@ -125,7 +117,6 @@ class CustomAgentPlugin(BaseAgentPlugin):
                 "de l'étudiant.\n"
                 "4. Présenter les prérequis lorsqu'ils sont documentés.\n"
                 "5. Comparer les UE si la question le demande.\n\n"
-
                 "RÈGLES STRICTES :\n"
                 "- Réponds uniquement à partir des données fournies.\n"
                 "- N'invente aucun cours, code UE, prérequis ou ECTS.\n"
@@ -135,7 +126,6 @@ class CustomAgentPlugin(BaseAgentPlugin):
                 "une décision officielle d'admission.\n"
                 "- Si les données sont insuffisantes, indique-le.\n"
                 "- Réponds en français, de manière concise.\n\n"
-
                 f"CONTEXTE RAG :\n{rag_context}\n\n"
                 f"RÉSULTATS DES OUTILS :\n{tool_results}"
             )
@@ -150,25 +140,16 @@ class CustomAgentPlugin(BaseAgentPlugin):
                 response = llm.invoke(messages)
                 response_text = str(response.content)
             except Exception:
-                response_text = format_domain_response(
-                    tool_results
-                )
+                response_text = format_domain_response(tool_results)
 
-            sources = sorted({
-                str(doc.metadata["source"])
-                for doc in relevant_docs
-                if doc.metadata.get("source")
-            })
+            sources = sorted(
+                {str(doc.metadata["source"]) for doc in relevant_docs if doc.metadata.get("source")}
+            )
 
             if sources:
-                response_text += (
-                "\n\nSources consultées : "
-                + ", ".join(sources)
-             )
+                response_text += "\n\nSources consultées : " + ", ".join(sources)
 
-            final_message = AIMessage(
-                content=f"[{self.name}] {response_text}"
-            )
+            final_message = AIMessage(content=f"[{self.name}] {response_text}")
 
             return {
                 "messages": [final_message],
